@@ -6,6 +6,7 @@ export default function App() {
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editTaskId, setEditTaskId] = useState(null);
 
   const addTask = () => {
     if (task.trim().length === 0) {
@@ -18,6 +19,24 @@ export default function App() {
     }
     setTasks([...tasks, { key: Math.random().toString(), task: task.trim(), completed: false }]);
     setTask('');
+  };
+
+  const startEditing = (taskKey, taskText) => {
+    setTask(taskText);
+    setEditTaskId(taskKey);
+  };
+
+  const saveEditTask = () => {
+    setTasks(tasks.map(item => 
+      item.key === editTaskId ? { ...item, task: task.trim() } : item
+    ));
+    setTask('');
+    setEditTaskId(null);
+  };
+
+  const cancelEdit = () => {
+    setTask('');
+    setEditTaskId(null);
   };
 
   const toggleCompleteTask = (taskKey) => {
@@ -40,31 +59,40 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>ToDo App</Text>
+      <Text style={styles.header}>ToDo List</Text>
 
       <TextInput
-        placeholder="Search tasks..."
+        placeholder="SEARCH TASKS"
         style={styles.searchInput}
         onChangeText={(text) => setSearchQuery(text)}
         value={searchQuery}
       />
 
       <TextInput
-        placeholder="Add new task..."
+        placeholder={editTaskId ? "EDIT TASK" : "ADD NEW TASK"}
         style={styles.input}
         onChangeText={(text) => setTask(text)}
         value={task}
       />
 
       <View style={styles.buttonContainer}>
-        <Button title="ADD TASK" onPress={addTask} />
-        <Button title="CLEAR ALL" color="red" onPress={clearAllTasks} />
+        {editTaskId ? (
+          <>
+            <Button title="SAVE EDIT" onPress={saveEditTask} />
+            <Button title="CANCEL" color="gray" onPress={cancelEdit} />
+          </>
+        ) : (
+          <>
+            <Button title="ADD TASK" onPress={addTask} />
+            <Button title="CLEAR ALL" color="red" onPress={clearAllTasks} />
+          </>
+        )}
       </View>
 
       <FlatList
         data={filteredTasks}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => toggleCompleteTask(item.key)}>
+          <TouchableOpacity onPress={() => toggleCompleteTask(item.key)} onLongPress={() => startEditing(item.key, item.task)}>
             <View style={styles.taskItem}>
               <Text style={item.completed ? styles.completedTask : styles.taskText}>
                 {item.task}
@@ -101,7 +129,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     padding: 5,
-    marginBottom: 15,
+    marginBottom: 15, 
     borderRadius: 5,
     backgroundColor: '#fff',
   },
